@@ -4,7 +4,7 @@ A portable Windows home for quick repository tasks. Keep Launcher open, jump int
 
 ## Run the preview
 
-1. Open [Releases](https://github.com/FITAutomate/fit-launcher/releases) and download **FIT-Launcher-0.1.0-preview.2-windows-x64.zip**. GitHub's automatic “Source code” ZIP is for developers and does not contain the runnable app.
+1. Open [Releases](https://github.com/FITAutomate/fit-launcher/releases) and download **FIT-Launcher-0.1.0-preview.3-windows-x64.zip**. GitHub's automatic “Source code” ZIP is for developers and does not contain the runnable app.
 2. Extract the **whole** `FIT Launcher` folder to a writable location.
 3. Open **`FIT Launcher/app/FIT Launcher.exe`**.
 4. Choose directories in the welcome screen. Open **Discovered**, then add projects to **Launch**. Ordinary folders can be bookmarked with **Add shortcut**.
@@ -18,6 +18,8 @@ Windows x64 only. Node, npm, Git, an app installer and administrator installatio
 - **Ports:** live Windows TCP listeners alongside your expected assignments. The left panel has lookup, ranges and system listeners; the right has drift when present and assignments with listening apps first. “Listening” does not mean healthy or HTTP.
 
 Launcher stays open after actions. Closing its window hides it to the tray; click the tray icon to restore it. **Quit** in the tray exits Launcher and leaves your projects running. Start with Windows is optional and off by default.
+
+Use **Send feedback** in the sidebar to report a problem, idea, question or something that worked well. Choose the app area and impact, then describe it. Launcher opens a pre-filled issue in this repository; review and submit it in your browser using your own GitHub account. It includes only the form fields plus app/Windows version, with no automatic workspace, paths or logs. Oversized messages remain editable so you can shorten the summary and add details on GitHub.
 
 ## Your data
 

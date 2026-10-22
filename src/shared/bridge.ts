@@ -9,6 +9,7 @@ import type {
   Action,
   Listener,
 } from "./schema";
+import type { FeedbackInput } from "./feedback";
 export interface Bridge {
   state(): Promise<AppState>;
   save(workspace: Workspace, revision: string): Promise<AppState>;
@@ -27,6 +28,7 @@ export interface Bridge {
   importConfig(): Promise<{ summary: string } | null>;
   applyImport(): Promise<AppState>;
   startup(enabled: boolean): Promise<AppState>;
+  feedback(input: FeedbackInput): Promise<void>;
   quit(): Promise<void>;
 }
 declare global {

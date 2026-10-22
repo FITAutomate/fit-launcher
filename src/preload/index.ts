@@ -18,6 +18,7 @@ const bridge: Bridge = {
   importConfig: () => request("importConfig"),
   applyImport: () => request("applyImport"),
   startup: (...a) => request("startup", ...a),
+  feedback: (...a) => request("feedback", ...a),
   quit: () => request("quit"),
 };
 contextBridge.exposeInMainWorld("launcher", bridge);

@@ -78,6 +78,7 @@ export const newLayout = (): Layout => LayoutSchema.parse({ schemaVersion: 1 });
 export const newRegistry = (): Registry =>
   RegistrySchema.parse({ schemaVersion: 1 });
 export interface AppState {
+  version: string;
   workspace: Workspace;
   layout: Layout;
   registry: Registry;

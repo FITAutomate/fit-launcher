@@ -6,10 +6,13 @@ import {
   Tray,
   Menu,
   nativeImage,
+  shell,
 } from "electron";
 import fs from "node:fs/promises";
 import { z } from "zod";
 import path from "node:path";
+import os from "node:os";
+import { feedbackIssueUrl } from "./feedback";
 import { Store } from "./store";
 import { dataLocation, resolveLaunch } from "./paths";
 import { windowsHelper } from "./windows";
@@ -91,6 +94,7 @@ async function state(): Promise<AppState> {
     args: ["--data-dir", dataDir],
   });
   return {
+    version: app.getVersion(),
     workspace: store.workspace,
     layout: store.layout,
     registry: store.registry,
@@ -186,6 +190,16 @@ else {
             throw Error("Untrusted caller.");
           try {
             if (op === "state") return await state();
+            if (op === "feedback") {
+              await shell.openExternal(
+                feedbackIssueUrl(args[0], {
+                  version: app.getVersion(),
+                  windows: os.release(),
+                  arch: process.arch,
+                }),
+              );
+              return;
+            }
             if (op === "save") {
               await store.save(
                 WorkspaceSchema.parse(args[0]),

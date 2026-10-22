@@ -16,7 +16,7 @@ The `Windows checks` workflow repeats the build on pull requests with read-only 
 Download the draft assets with GitHub CLI. Verify:
 
 ```powershell
-Get-FileHash .\FIT-Launcher-0.1.0-preview.2-windows-x64.zip -Algorithm SHA256
+Get-FileHash .\FIT-Launcher-0.1.0-preview.3-windows-x64.zip -Algorithm SHA256
 ```
 
 Compare with the attached `.sha256`. Run the portable smoke against that exact ZIP using `node scripts/smoke-portable.mjs "path\downloaded.zip"`. Inspect the release title, source tag/commit and attached assets. Record Windows downloaded-file behavior and signing status without promising a prompt-free launch. Publish only after these checks pass.

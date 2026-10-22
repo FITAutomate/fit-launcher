@@ -6,11 +6,13 @@ import LaunchBoard from "./Launch";
 import Discovered from "./Discovered";
 import Ports from "./Ports";
 import Settings from "./Settings";
+import Feedback from "./Feedback";
 import { ShortcutEditor } from "./ui";
 import "./styles.css";
 function App() {
   const [state, setState] = React.useState<AppState | null>(null),
-    [tab, setTab] = React.useState("Launch"),
+    [tab, setTab] = React.useState<"Launch" | "Discovered" | "Ports">("Launch"),
+    [feedback, setFeedback] = React.useState(false),
     [query, setQuery] = React.useState(""),
     [settings, setSettings] = React.useState(false),
     [wizard, setWizard] = React.useState(false),
@@ -72,7 +74,7 @@ function App() {
           </div>
         </div>
         <nav aria-label="Main navigation">
-          {["Launch", "Discovered", "Ports"].map((name, i) => (
+          {(["Launch", "Discovered", "Ports"] as const).map((name, i) => (
             <button
               key={name}
               aria-label={name}
@@ -106,7 +108,8 @@ function App() {
           >
             ⚙ Settings
           </button>
-          <small>WINDOWS · PORTABLE PREVIEW</small>
+          <button onClick={() => setFeedback(true)}>Send feedback</button>
+          <small>WINDOWS · {state.version}</small>
         </div>
       </aside>
       <main className="workspace">
@@ -183,6 +186,13 @@ function App() {
           {...common}
           wizard={wizard}
           onClose={() => setSettings(false)}
+        />
+      )}
+      {feedback && (
+        <Feedback
+          where={tab}
+          version={state.version}
+          onClose={() => setFeedback(false)}
         />
       )}
       {editing && (

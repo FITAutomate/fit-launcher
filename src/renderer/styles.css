@@ -14,7 +14,8 @@ body {
 }
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 button {
@@ -50,7 +51,8 @@ button.danger {
   border-color: #7e434e;
 }
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 1px solid #33415a;
   border-radius: 6px;
@@ -95,7 +97,8 @@ label small {
   margin-left: 6px;
 }
 label input,
-label textarea {
+label textarea,
+label select {
   display: block;
   margin-top: 7px;
 }
