@@ -1,0 +1,9 @@
+node_modules
+dist
+out
+portable
+data
+.local-data
+test-results
+playwright-report
+package-lock.json

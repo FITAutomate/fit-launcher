@@ -1,0 +1,14 @@
+schemaVersion: 1
+last_updated: '2026-10-22'
+ranges:
+  local_apps:
+    start: 5100
+    end: 5199
+    note: Example range; choose your own
+assignments:
+  - repo: example-project
+    path: C:/Projects/example-project
+    framework: web
+    default_port: 5100
+    status: active
+    note: Fictional example; replace with your own project

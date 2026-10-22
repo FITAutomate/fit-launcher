@@ -1,0 +1,38 @@
+name: Windows preview release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.12.0
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:electron
+      - run: npm run make
+      - run: npm run test:portable
+      - run: npm run audit:release
+      - name: Create draft with validated assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = "v$version"
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne $tag) { throw 'Tag and package version differ' }
+          $asset = "out/FIT-Launcher-$version-windows-x64.zip"
+          gh release create $tag $asset "$asset.sha256" --draft --prerelease --target $env:GITHUB_SHA --title "FIT Launcher $version" --notes-file docs/preview-notes.md
+          if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed' }
