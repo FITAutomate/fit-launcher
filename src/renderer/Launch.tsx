@@ -6,6 +6,7 @@ import {
   useNodesState,
   useReactFlow,
   ReactFlowProvider,
+  PanOnScrollMode,
   type Node,
   type NodeProps,
   type Viewport,
@@ -13,7 +14,22 @@ import {
 import "@xyflow/react/dist/style.css";
 import type { Common } from "./ui";
 import { Actions, Empty } from "./ui";
-import type { Launch } from "../shared/schema";
+import type { Launch, Layout } from "../shared/schema";
+import {
+  HOME_VIEW,
+  MIN_ZOOM,
+  gridGeometry,
+  initialOrder,
+  reconcileOrder,
+  pack,
+  insertAtPosition,
+  type Grid,
+} from "./launch-layout";
+type BoardProps = Common & {
+  query: string;
+  edit: (entry?: Launch) => void;
+  commitLayout: (layout: Layout) => void;
+};
 type CardData = {
   entry: Launch;
   target: string;
@@ -55,27 +71,58 @@ function RepoCard({ data }: NodeProps<CardNode>) {
   );
 }
 const nodeTypes = { repo: RepoCard };
-function Board(
-  props: Common & { query: string; edit: (entry?: Launch) => void },
-) {
-  const { state, notify, edit, query } = props;
+function Board(props: BoardProps) {
+  const { state, notify, edit, query, commitLayout } = props;
   const [nodes, setNodes, onNodesChange] = useNodesState<CardNode>([]);
   const flow = useReactFlow<CardNode>();
   const layout = React.useRef(state.layout);
-  const ready = React.useRef(false);
+  const order = React.useRef(
+    initialOrder(
+      state.workspace.launches.map((e) => e.id),
+      state.layout.positions,
+    ),
+  );
+  const container = React.useRef<HTMLDivElement>(null);
+  const [width, setWidth] = React.useState(0);
+  const [dragging, setDragging] = React.useState(false);
+  const drag = React.useRef<{ order: string[]; grid: Grid } | null>(null);
+  const height =
+    Math.max(0, ...nodes.map((node) => node.measured?.height || 0)) || 260;
+  const { columns, rowStep } = gridGeometry(width, height);
+  const grid = { columns, rowStep };
+
   React.useEffect(() => {
-    layout.current = state.layout;
-  }, [state.layout]);
+    const element = container.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setWidth(entry.contentRect.width),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [state.workspace.launches.length > 0]);
+
+  function persist(
+    positions = layout.current.positions,
+    viewport = flow.getViewport(),
+  ) {
+    const next = { schemaVersion: 1 as const, positions, viewport };
+    layout.current = next;
+    commitLayout(next);
+  }
+
   React.useEffect(() => {
-    setNodes(
-      state.workspace.launches.map((entry, i) => ({
+    order.current = reconcileOrder(
+      order.current,
+      state.workspace.launches.map((entry) => entry.id),
+    );
+    const positions = pack(order.current, grid);
+    setNodes((previous) =>
+      state.workspace.launches.map((entry) => ({
+        ...previous.find((node) => node.id === entry.id),
         id: entry.id,
         type: "repo",
         dragHandle: ".drag-handle",
-        position: layout.current.positions[entry.id] || {
-          x: (i % 3) * 350,
-          y: Math.floor(i / 3) * 245,
-        },
+        position: positions[entry.id],
         hidden:
           !!query &&
           !(
@@ -115,34 +162,58 @@ function Board(
       })),
     );
   }, [state.workspace, state.resolved, query]);
-  async function persist(current: CardNode[], viewport = flow.getViewport()) {
-    const positions = { ...layout.current.positions };
-    for (const node of current) positions[node.id] = node.position;
-    try {
-      await window.launcher.layout({ schemaVersion: 1, positions, viewport });
-      layout.current = { schemaVersion: 1, positions, viewport };
-    } catch (e) {
-      notify(String(e), true);
+
+  // Width/measurement changes only project the order; moving nodes never define it.
+  React.useEffect(() => {
+    if (!width || dragging) return;
+    const positions = pack(order.current, grid);
+    setNodes((current) =>
+      current.map((node) => ({ ...node, position: positions[node.id] })),
+    );
+    persist(positions);
+  }, [columns, rowStep, width > 0, dragging, state.workspace]);
+
+  function arrange(reset = false) {
+    if (reset) {
+      order.current = [...state.workspace.launches]
+        .sort(
+          (a, b) =>
+            a.group.localeCompare(b.group) || a.label.localeCompare(b.label),
+        )
+        .map((entry) => entry.id);
+    }
+    const positions = pack(order.current, grid);
+    setNodes((current) =>
+      current.map((node) => ({ ...node, position: positions[node.id] })),
+    );
+    persist(positions, HOME_VIEW);
+    void flow.setViewport(HOME_VIEW);
+  }
+  function reorder(node: CardNode, finish: boolean) {
+    const starting = drag.current;
+    if (!starting) return;
+    const nextOrder = insertAtPosition(
+      starting.order,
+      node.id,
+      node.position,
+      starting.grid,
+    );
+    const positions = pack(nextOrder, starting.grid);
+    setNodes((current) =>
+      current.map((item) => ({
+        ...item,
+        position:
+          !finish && item.id === node.id ? node.position : positions[item.id],
+      })),
+    );
+    if (finish) {
+      order.current = nextOrder;
+      drag.current = null;
+      setDragging(false);
+      persist(positions);
     }
   }
-  function arrange(reset = false) {
-    const sorted = [...nodes].sort(
-      (a, b) =>
-        a.data.entry.group.localeCompare(b.data.entry.group) ||
-        a.data.entry.label.localeCompare(b.data.entry.label),
-    );
-    const arranged = sorted.map((node, i) => ({
-      ...node,
-      position: { x: (i % 3) * 350, y: Math.floor(i / 3) * 245 },
-    }));
-    setNodes(arranged);
-    void persist(
-      arranged,
-      reset ? { x: 20, y: 20, zoom: 1 } : flow.getViewport(),
-    );
-    if (reset) void flow.setViewport({ x: 20, y: 20, zoom: 1 });
-    else setTimeout(() => flow.fitView({ padding: 0.15 }), 20);
-  }
+  const fitOptions = { padding: 0.15, minZoom: MIN_ZOOM, maxZoom: 1 };
   if (!state.workspace.launches.length)
     return (
       <Empty title="Your projects, one home">
@@ -153,14 +224,21 @@ function Board(
       </Empty>
     );
   return (
-    <div className="board" data-testid="launch-board">
+    <div className="board" data-testid="launch-board" ref={container}>
       <div className="board-tools">
-        <span>Drag a card header to arrange your workspace</span>
-        <button onClick={() => flow.fitView({ padding: 0.15 })}>Fit all</button>
-        <button onClick={() => arrange()}>Auto arrange</button>
+        <span>
+          {query
+            ? "Clear search to rearrange cards"
+            : "Drag a card header to reorder · Scroll to browse"}
+        </span>
+        <button onClick={() => flow.fitView(fitOptions)}>Fit all</button>
+        <button disabled={!!query || dragging} onClick={() => arrange()}>
+          Auto arrange
+        </button>
         <button
+          disabled={!!query || dragging}
           onClick={() => {
-            if (confirm("Reset saved card positions?")) arrange(true);
+            if (confirm("Reset card order to group and name?")) arrange(true);
           }}
         >
           Reset layout
@@ -170,25 +248,28 @@ function Board(
         nodes={nodes}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
-        snapToGrid
-        snapGrid={[20, 20]}
-        minZoom={0.2}
+        minZoom={MIN_ZOOM}
         maxZoom={2}
         defaultViewport={state.layout.viewport}
-        onInit={() => {
-          ready.current = true;
+        panOnScroll
+        panOnScrollMode={PanOnScrollMode.Vertical}
+        zoomOnScroll={false}
+        zoomOnDoubleClick={false}
+        nodesDraggable={!query}
+        nodesFocusable={false}
+        elementsSelectable={false}
+        onNodeDragStart={() => {
+          drag.current = { order: [...order.current], grid };
+          setDragging(true);
         }}
-        onNodeDragStop={(_e, _n, current) => {
-          void persist(current);
-        }}
-        onMoveEnd={(_e, viewport: Viewport) => {
-          if (ready.current) void persist(flow.getNodes(), viewport);
-        }}
+        onNodeDrag={(_e, node) => reorder(node, false)}
+        onNodeDragStop={(_e, node) => reorder(node, true)}
+        onMoveEnd={(_e, viewport: Viewport) => persist(undefined, viewport)}
         nodesConnectable={false}
         deleteKeyCode={null}
       >
         <Background gap={22} size={1.5} color="#2a3548" />
-        <Controls showInteractive={false} />
+        <Controls showInteractive={false} fitViewOptions={fitOptions} />
       </ReactFlow>
       <details className="accessible-list">
         <summary>Project list</summary>
@@ -202,9 +283,7 @@ function Board(
     </div>
   );
 }
-export default function LaunchBoard(
-  props: Common & { query: string; edit: (entry?: Launch) => void },
-) {
+export default function LaunchBoard(props: BoardProps) {
   return (
     <ReactFlowProvider>
       <Board {...props} />

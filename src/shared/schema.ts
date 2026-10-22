@@ -40,7 +40,7 @@ export const LayoutSchema = z.object({
     .object({
       x: z.number().finite(),
       y: z.number().finite(),
-      zoom: z.number().min(0.1).max(4),
+      zoom: z.number().min(0.01).max(4),
     })
     .default({ x: 0, y: 0, zoom: 1 }),
 });
