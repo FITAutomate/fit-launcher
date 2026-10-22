@@ -1,6 +1,6 @@
 Portable Windows x64 preview of FIT Launcher.
 
-Download **FIT-Launcher-0.1.0-preview.1-windows-x64.zip**, extract the whole folder, then open **FIT Launcher/app/FIT Launcher.exe**. The automatic source-code archives are not runnable packages.
+Download **FIT-Launcher-0.1.0-preview.2-windows-x64.zip**, extract the whole folder, then open **FIT Launcher/app/FIT Launcher.exe**. The automatic source-code archives are not runnable packages.
 
 Choose your project directories in the welcome screen. Discover repositories, add shortcuts to the movable Launch board, and jump into Explorer, your editor, a terminal or the GitHub repo page. Launcher stays available while you close the external tools yourself. Ports shows live Windows listeners and optional local/connected assignments.
 
