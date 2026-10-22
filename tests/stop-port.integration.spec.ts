@@ -124,6 +124,11 @@ test("UI Stop reaches production helper; stale/reused owner and protected identi
       .locator(".port-detail")
       .getByRole("button", { name: "Stop…" })
       .click();
+    // The click starts asynchronous Windows identity checks and the Stop helper.
+    // Wait for its UI completion before checking the child process exit.
+    await expect(page.getByRole("status")).toContainText("Process stopped.", {
+      timeout: 30000,
+    });
     await expect.poll(() => original.child.exitCode).not.toBeNull();
     expect(
       await app.evaluate(() => Reflect.get(globalThis, "confirmationDetail")),

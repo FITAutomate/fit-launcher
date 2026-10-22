@@ -3,7 +3,7 @@ import type { AppState, Workspace, Launch, Discovery } from "../shared/schema";
 export interface Common {
   state: AppState;
   save: (workspace: Workspace) => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: (replaceLayout?: boolean) => Promise<void>;
   notify: (text: string, error?: boolean) => void;
 }
 export function Modal({

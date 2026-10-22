@@ -319,7 +319,7 @@ export default function Settings({
                       run(async () => {
                         if (!confirm(transfer)) return;
                         await window.launcher.applyImport();
-                        await refresh();
+                        await refresh(true);
                         onClose();
                       })
                     }

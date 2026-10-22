@@ -1,7 +1,13 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import "../shared/bridge";
-import type { AppState, Launch, Discovery, Workspace } from "../shared/schema";
+import type {
+  AppState,
+  Launch,
+  Discovery,
+  Workspace,
+  Layout,
+} from "../shared/schema";
 import LaunchBoard from "./Launch";
 import Discovered from "./Discovered";
 import Ports from "./Ports";
@@ -36,8 +42,43 @@ function App() {
       error ? 15000 : 5000,
     );
   }, []);
-  const refresh = React.useCallback(async () => {
-    setState(await window.launcher.state());
+  const [layoutEpoch, setLayoutEpoch] = React.useState(0);
+  // Committed renderer layout remains authoritative until an explicit profile
+  // replacement. A slow state/save response must not undo a newer drag or pan.
+  const acceptState = React.useCallback(
+    (next: AppState, replaceLayout = false) => {
+      setState((current) => {
+        if (!current || replaceLayout) return next;
+        const ids = new Set(next.workspace.launches.map((entry) => entry.id));
+        return {
+          ...next,
+          layout: {
+            ...current.layout,
+            positions: Object.fromEntries(
+              Object.entries(current.layout.positions).filter(([id]) =>
+                ids.has(id),
+              ),
+            ),
+          },
+        };
+      });
+      if (replaceLayout) setLayoutEpoch((epoch) => epoch + 1);
+    },
+    [],
+  );
+  const commitLayout = React.useCallback(
+    (layout: Layout) => {
+      setState((current) => (current ? { ...current, layout } : current));
+      void window.launcher
+        .layout(layout)
+        .catch((error) =>
+          notify(`Could not save layout: ${String(error)}`, true),
+        );
+    },
+    [notify],
+  );
+  const refresh = React.useCallback(async (replaceLayout = false) => {
+    acceptState(await window.launcher.state(), replaceLayout);
   }, []);
   React.useEffect(() => {
     window.launcher
@@ -53,7 +94,7 @@ function App() {
   }, []);
   async function save(workspace: Workspace) {
     if (!state) return;
-    setState(await window.launcher.save(workspace, state.revision));
+    acceptState(await window.launcher.save(workspace, state.revision));
   }
   if (!state)
     return (
@@ -159,7 +200,9 @@ function App() {
         >
           {tab === "Launch" ? (
             <LaunchBoard
+              key={layoutEpoch}
               {...common}
+              commitLayout={commitLayout}
               query={query}
               edit={(entry) => setEditing({ entry })}
             />
