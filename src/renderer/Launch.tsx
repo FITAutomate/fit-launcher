@@ -85,7 +85,9 @@ function Board(props: BoardProps) {
   const container = React.useRef<HTMLDivElement>(null);
   const [width, setWidth] = React.useState(0);
   const [dragging, setDragging] = React.useState(false);
-  const drag = React.useRef<{ order: string[]; grid: Grid } | null>(null);
+  const drag = React.useRef<{ id: string; order: string[]; grid: Grid } | null>(
+    null,
+  );
   const height =
     Math.max(0, ...nodes.map((node) => node.measured?.height || 0)) || 260;
   const { columns, rowStep } = gridGeometry(width, height);
@@ -111,10 +113,12 @@ function Board(props: BoardProps) {
   }
 
   React.useEffect(() => {
-    order.current = reconcileOrder(
-      order.current,
-      state.workspace.launches.map((entry) => entry.id),
-    );
+    const ids = state.workspace.launches.map((entry) => entry.id);
+    order.current = reconcileOrder(order.current, ids);
+    if (drag.current && !ids.includes(drag.current.id)) {
+      drag.current = null;
+      setDragging(false);
+    }
     const positions = pack(order.current, grid);
     setNodes((previous) =>
       state.workspace.launches.map((entry) => ({
@@ -193,7 +197,10 @@ function Board(props: BoardProps) {
     const starting = drag.current;
     if (!starting) return;
     const nextOrder = insertAtPosition(
-      starting.order,
+      reconcileOrder(
+        starting.order,
+        state.workspace.launches.map((entry) => entry.id),
+      ),
       node.id,
       node.position,
       starting.grid,
@@ -258,8 +265,8 @@ function Board(props: BoardProps) {
         nodesDraggable={!query}
         nodesFocusable={false}
         elementsSelectable={false}
-        onNodeDragStart={() => {
-          drag.current = { order: [...order.current], grid };
+        onNodeDragStart={(_e, node) => {
+          drag.current = { id: node.id, order: [...order.current], grid };
           setDragging(true);
         }}
         onNodeDrag={(_e, node) => reorder(node, false)}

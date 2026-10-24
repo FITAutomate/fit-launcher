@@ -68,6 +68,124 @@ async function assertPacked(page: Page, count: number) {
   }
 }
 
+for (const change of ["add", "remove-other", "remove-dragged"] as const) {
+  test(`a pending ${change} save preserves grid membership during a drag`, async () => {
+    const temp = await fs.mkdtemp(path.join(os.tmpdir(), "fit-grid-pending-"));
+    await fs.writeFile(
+      path.join(temp, "workspace.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        setupComplete: true,
+        launches: ["a", "b", "c"].map((id) => ({
+          id,
+          label: id,
+          absolutePath: temp,
+        })),
+      }),
+    );
+    const app = await electron.launch({ args: [".", "--data-dir", temp] });
+    try {
+      const page = await app.firstWindow();
+      page.on("dialog", (dialog) => dialog.accept());
+      await expect(page.locator(".repo-card")).toHaveCount(3);
+      await page
+        .getByRole("button", { name: "Auto arrange", exact: true })
+        .click();
+      await page.evaluate(() => window.launcher.state());
+      // Gate just this fixture's next workspace write in the real main process.
+      // This lets a normal UI save resolve while the mouse is held down.
+      await app.evaluate((_electron, dir) => {
+        const files = process.getBuiltinModule("fs/promises");
+        const original = files.writeFile;
+        files.writeFile = async (...args: Parameters<typeof original>) => {
+          if (
+            String(args[0]).startsWith(
+              dir + process.getBuiltinModule("path").sep + "workspace.json.",
+            )
+          ) {
+            files.writeFile = original;
+            await new Promise<void>((resolve) => {
+              Reflect.set(globalThis, "releaseWorkspaceWrite", resolve);
+            });
+          }
+          return original(...args);
+        };
+      }, temp);
+      if (change === "add") {
+        await page
+          .getByRole("button", { name: "+ Add shortcut", exact: true })
+          .click();
+        await page.getByLabel("Name", { exact: true }).fill("new");
+        await page.getByLabel("Folder", { exact: true }).fill(temp);
+        await page
+          .getByRole("button", { name: "Save shortcut", exact: true })
+          .click();
+        await page
+          .getByRole("button", { name: "Close dialog", exact: true })
+          .click();
+      } else {
+        await page
+          .locator(`[data-id="${change === "remove-other" ? "c" : "a"}"]`)
+          .getByRole("button", { name: "Remove", exact: true })
+          .click();
+      }
+      await expect
+        .poll(() =>
+          app.evaluate(
+            () => typeof Reflect.get(globalThis, "releaseWorkspaceWrite"),
+          ),
+        )
+        .toBe("function");
+      const from = await page
+        .locator('[data-id="a"] .drag-handle')
+        .boundingBox();
+      const to = await page.locator('[data-id="b"] .drag-handle').boundingBox();
+      await page.mouse.move(from!.x + 80, from!.y + 20);
+      await page.mouse.down();
+      await page.mouse.move(from!.x + 90, from!.y + 20, { steps: 3 });
+      await app.evaluate(() =>
+        Reflect.get(globalThis, "releaseWorkspaceWrite")(),
+      );
+      await expect(page.locator(".repo-card")).toHaveCount(
+        change === "add" ? 4 : 2,
+      );
+      await page.mouse.move(to!.x + 80, to!.y + 20, { steps: 10 });
+      await page.mouse.up();
+      const state = await page.evaluate(() => window.launcher.state());
+      const added = state.workspace.launches.find(
+        (entry) => entry.label === "new",
+      );
+      const expected =
+        change === "add"
+          ? ["b", "a", "c", added!.id]
+          : change === "remove-other"
+            ? ["b", "a"]
+            : ["b", "c"];
+      await expect.poll(() => renderedOrder(page)).toEqual(expected);
+      await assertPacked(page, expected.length);
+      const saved = (await page.evaluate(() => window.launcher.state())).layout
+        .positions;
+      expect(Object.keys(saved).sort()).toEqual([...expected].sort());
+      const coordinates = Object.values(saved).sort(
+        (a, b) => a.y - b.y || a.x - b.x,
+      );
+      expect(coordinates[0]).toEqual({ x: 0, y: 0 });
+      expect(coordinates[1].x).toBe(340);
+      await page
+        .getByRole("button", { name: "Discovered", exact: true })
+        .click();
+      await page.getByRole("button", { name: "Launch", exact: true }).click();
+      await expect.poll(() => renderedOrder(page)).toEqual(expected);
+    } finally {
+      await app
+        .evaluate(() => Reflect.get(globalThis, "releaseWorkspaceWrite")?.())
+        .catch(() => {});
+      await app.close();
+      await fs.rm(temp, { recursive: true, force: true });
+    }
+  });
+}
+
 test("Auto arrange can retry the same layout after a disk write failure", async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), "fit-grid-retry-"));
   await fs.writeFile(
