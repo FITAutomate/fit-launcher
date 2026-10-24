@@ -41,10 +41,22 @@ const check = async (root, initial = false) => {
         data.startup
       )
         throw Error("Release contains personal/integrated defaults");
+    } else {
+      await expect(
+        page.locator('.react-flow__node[data-id="portable-proof"]'),
+      ).toBeVisible();
+      // Existing coordinates establish order; the ordered grid then packs them.
+      await expect
+        .poll(
+          async () =>
+            (await page.evaluate(() => window.launcher.state())).layout
+              .positions["portable-proof"],
+        )
+        .toEqual({ x: 0, y: 0 });
     }
     const ports = await page.evaluate(() => window.launcher.ports());
     if (!ports.listeners.length) throw Error("Packaged helper failed");
-    return data;
+    return await page.evaluate(() => window.launcher.state());
   } finally {
     await app.close();
   }
@@ -77,7 +89,8 @@ try {
   const state = await check(moved);
   if (
     !state.workspace.setupComplete ||
-    state.layout.positions["portable-proof"].x !== 140
+    state.workspace.launches[0].id !== "portable-proof" ||
+    state.layout.viewport.zoom !== 0.8
   )
     throw Error("Settings/layout lost on relocation");
   const before = await fs.readFile(path.join(moved, "data", "workspace.json"));
