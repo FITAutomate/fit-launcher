@@ -13,7 +13,7 @@ Windows x64 only. Node, npm, Git, an app installer and administrator installatio
 
 ## Three views
 
-- **Launch:** drag card headers on a dotted snap grid; pan, zoom, group cards, Fit all, Auto arrange or Reset layout. Card actions open Explorer, an editor, a terminal or the repository page in your default browser. Edit/Repair changes the target; Remove only removes the shortcut.
+- **Launch:** drag card headers to reorder an ordered grid; other cards move aside. Auto arrange fills the window with readable cards; scroll vertically to browse the remaining rows. Fit all zooms out to an overview without changing the order. Reset layout restores group/name order. Resize the window to change the number of columns. Clear search before rearranging. Card actions open Explorer, an editor, a terminal or the repository page in your default browser. Edit/Repair changes the target; Remove only removes the shortcut.
 - **Discovered:** a searchable grid grouped by scan directory, with a Git-only filter and Rescan. Nested repositories, worktrees and project hints are found without running project scripts or requiring Git.
 - **Ports:** live Windows TCP listeners alongside your expected assignments. The left panel has lookup, ranges and system listeners; the right has drift when present and assignments with listening apps first. “Listening” does not mean healthy or HTTP.
 
