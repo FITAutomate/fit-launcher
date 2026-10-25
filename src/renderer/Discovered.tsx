@@ -9,7 +9,7 @@ export default function Discovered({
 }: Common & { add: (item: Discovery) => void; query: string }) {
   const [items, setItems] = React.useState<Discovery[]>([]);
   const [busy, setBusy] = React.useState(false);
-  const [repos, setRepos] = React.useState(false);
+  const [repos, setRepos] = React.useState(true);
   const [scanned, setScanned] = React.useState(false);
   async function scan() {
     setBusy(true);
@@ -41,7 +41,8 @@ export default function Discovered({
         <div>
           <h2>Find your next shortcut</h2>
           <p>
-            Repositories and project folders inside your chosen directories.
+            Scans stop at each Git repository root. Uncheck Git repos only to
+            include other project folders.
           </p>
         </div>
         <label className="check">

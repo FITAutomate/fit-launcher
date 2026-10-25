@@ -343,6 +343,17 @@ nav button.active {
   font-size: 10px;
   letter-spacing: 0.4px;
 }
+.jump-command {
+  flex-shrink: 0;
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #77aaff;
+  font:
+    11px Consolas,
+    monospace;
+}
 .card-path {
   margin: 17px 0 15px;
   color: #9aaccc;

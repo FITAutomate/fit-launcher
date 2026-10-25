@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 test("feedback UI uses the validated main bridge, preserves failed input and opens a reviewable GitHub issue", async () => {
+  const { version } = JSON.parse(await fs.readFile("package.json", "utf8"));
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "fit-feedback-"));
   const app = await electron.launch({ args: [".", "--data-dir", dir] });
   try {
@@ -40,7 +41,7 @@ test("feedback UI uses the validated main bridge, preserves failed input and ope
     const details =
       "Keep the selected port after refresh & show its timestamp.";
     await modal.getByLabel("What happened?").fill(details);
-    await page.screenshot({ path: "test-results/feedback-preview3.png" });
+    await page.screenshot({ path: "test-results/feedback.png" });
     await modal.getByRole("button", { name: "Open GitHub issue →" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     const opened = await app.evaluate(() =>
@@ -54,9 +55,7 @@ test("feedback UI uses the validated main bridge, preserves failed input and ope
     expect(url.searchParams.get("title")).toBe("[Idea] " + details);
     expect(url.searchParams.get("body")).toContain("**Where were you:** Ports");
     expect(url.searchParams.get("body")).toContain("**Impact:** minor");
-    expect(url.searchParams.get("body")).toContain(
-      "FIT Launcher: 0.1.0-preview.3",
-    );
+    expect(url.searchParams.get("body")).toContain(`FIT Launcher: ${version}`);
     expect(url.searchParams.get("body")).not.toContain(dir);
     expect(url.searchParams.get("body")).not.toContain("workspace.json");
     await page

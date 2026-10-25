@@ -95,11 +95,14 @@ test("bounded recursive discovery handles worktrees, overlap and a junction loop
       ignored = path.join(dir, "node_modules", "fake");
     for (const folder of [
       path.join(repo, ".git"),
+      path.join(repo, "nested-repo", ".git"),
+      path.join(repo, "app"),
       worktree,
       hint,
       path.join(ignored, ".git"),
     ])
       await fs.mkdir(folder, { recursive: true });
+    await fs.writeFile(path.join(repo, "app", "package.json"), "{}");
     await fs.writeFile(
       path.join(repo, ".git", "config"),
       '[remote "origin"]\n url = git@github.com:example/demo.git\n',

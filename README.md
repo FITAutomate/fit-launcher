@@ -4,18 +4,26 @@ A portable Windows home for quick repository tasks. Keep Launcher open, jump int
 
 ## Run the preview
 
-1. Open [Releases](https://github.com/FITAutomate/fit-launcher/releases) and download **FIT-Launcher-0.1.0-preview.3-windows-x64.zip**. GitHub's automatic “Source code” ZIP is for developers and does not contain the runnable app.
+1. Open [Releases](https://github.com/FITAutomate/fit-launcher/releases) and download **FIT-Launcher-0.1.0-preview.5-windows-x64.zip**. GitHub's automatic “Source code” ZIP is for developers and does not contain the runnable app.
 2. Extract the **whole** `FIT Launcher` folder to a writable location.
 3. Open **`FIT Launcher/app/FIT Launcher.exe`**.
 4. Choose directories in the welcome screen. Open **Discovered**, then add projects to **Launch**. Ordinary folders can be bookmarked with **Add shortcut**.
 
 Windows x64 only. Node, npm, Git, an app installer and administrator installation are not required to run the ZIP. The preview is **unsigned**. Windows may show a reputation warning, and managed devices may block it; follow your organization's policy. Test evidence is from Windows 11 x64 and Windows CI, not a pristine Windows VM. See [validation](docs/validation.md).
 
+## Try it as a new user on another PC
+
+Copy the portable ZIP to the laptop and extract the whole `FIT Launcher` folder into a writable location, such as Documents. Run `app/FIT Launcher.exe`; the welcome wizard creates a new empty `data` folder. Choose directories that exist on that laptop. Do not copy the desktop installation's `data` folder or import its profile for this test.
+
+Published release assets contain the code from their tag. To test newer work before a release, use the clean ZIP under `out/` from a tested build, rather than zipping an existing installation containing personal data. No registry, shell profile, Node or Git installation is required for a first run.
+
 ## Three views
 
 - **Launch:** drag card headers to reorder an ordered grid; other cards move aside. Auto arrange fills the window with readable cards; scroll vertically to browse the remaining rows. Fit all zooms out to an overview without changing the order. Reset layout restores group/name order. Resize the window to change the number of columns. Clear search before rearranging. Card actions open Explorer, an editor, a terminal or the repository page in your default browser. Edit/Repair changes the target; Remove only removes the shortcut.
-- **Discovered:** a searchable grid grouped by scan directory, with a Git-only filter and Rescan. Nested repositories, worktrees and project hints are found without running project scripts or requiring Git.
+- **Discovered:** a searchable grid grouped by scan directory, defaulting to Git repositories. Uncheck Git repos only to include other project folders. Scanning stops at the first repository root, including a worktree, and does not list its subprojects separately. Ordinary container folders are traversed up to the configured depth, without running scripts or requiring Git.
 - **Ports:** live Windows TCP listeners alongside your expected assignments. The left panel has lookup, ranges and system listeners; the right has drift when present and assignments with listening apps first. “Listening” does not mean healthy or HTTP.
+
+Card headings use the folder name when an imported title is just its jump command. Edit the Name to describe its purpose. The jump command appears separately in blue beside the availability dot.
 
 Launcher stays open after actions. Closing its window hides it to the tray; click the tray icon to restore it. **Quit** in the tray exits Launcher and leaves your projects running. Start with Windows is optional and off by default.
 
@@ -55,6 +63,8 @@ Stop is available only for a registered port or configured range, with a known c
 ## Optional PowerShell shortcuts
 
 Settings can preview/import literal folder functions from a selected `.ps1` file. It parses the AST without executing or rewriting that source. Command wrappers stay in the original file, and missing folders can be repaired in Launch.
+
+Saving a PowerShell shortcut name on a card does not enable it in your shell. Enable Settings → PowerShell integration, save Settings, and add the displayed setup line to the profile for the PowerShell edition you use. Then open a new shell (or load that file in the current shell).
 
 Opting into PowerShell integration generates `data/integrations/shortcuts.ps1`. Settings shows the line you can add to your own profile. The app never edits the profile. Existing command names are skipped with a warning; remove an old generated function before reloading a changed definition in an existing session. New sessions read the current generated file.
 
