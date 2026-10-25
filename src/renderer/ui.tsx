@@ -1,5 +1,6 @@
 import React from "react";
 import type { AppState, Workspace, Launch, Discovery } from "../shared/schema";
+import { folderTitle, shortcutTitle } from "../shared/shortcut-title";
 export interface Common {
   state: AppState;
   save: (workspace: Workspace) => Promise<void>;
@@ -102,7 +103,9 @@ export function ShortcutEditor({
   onClose: () => void;
 }) {
   const [label, setLabel] = React.useState(
-    entry?.label || discovery?.name || "",
+    entry
+      ? shortcutTitle(entry, state.resolved[entry.id]?.path || "")
+      : discovery?.name || "",
   );
   const [folder, setFolder] = React.useState(
     entry ? state.resolved[entry.id]?.path || "" : discovery?.path || "",
@@ -165,6 +168,7 @@ export function ShortcutEditor({
             value={label}
             required
             maxLength={100}
+            placeholder="Project name or purpose"
             onChange={(e) => setLabel(e.target.value)}
           />
         </label>
@@ -176,11 +180,20 @@ export function ShortcutEditor({
               value={folder}
               required
               onChange={(e) => setFolder(e.target.value)}
+              onBlur={() => {
+                if (!label.trim() && folder.trim())
+                  setLabel(folderTitle(folder.trim()));
+              }}
             />
             <button
               type="button"
               onClick={() =>
-                window.launcher.pick("folder").then((p) => p && setFolder(p))
+                window.launcher.pick("folder").then((p) => {
+                  if (p) {
+                    setFolder(p);
+                    if (!label.trim()) setLabel(folderTitle(p));
+                  }
+                })
               }
             >
               Browse…
@@ -219,6 +232,11 @@ export function ShortcutEditor({
             placeholder="my-project"
           />
         </label>
+        <p className="muted">
+          {state.workspace.shellIntegration
+            ? "New shells must load the generated shortcuts file from your PowerShell profile. Setup is in Settings → PowerShell integration."
+            : "Jump commands are off. Enable PowerShell integration in Settings and add its setup line to your PowerShell profile. Card buttons work without it."}
+        </p>
         {error && (
           <p className="error" role="alert">
             {error}

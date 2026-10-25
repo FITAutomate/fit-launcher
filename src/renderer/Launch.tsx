@@ -15,6 +15,7 @@ import "@xyflow/react/dist/style.css";
 import type { Common } from "./ui";
 import { Actions, Empty } from "./ui";
 import type { Launch, Layout } from "../shared/schema";
+import { shortcutTitle } from "../shared/shortcut-title";
 import {
   HOME_VIEW,
   MIN_ZOOM,
@@ -45,9 +46,19 @@ function RepoCard({ data }: NodeProps<CardNode>) {
       <div className="drag-handle">
         <span className="repo-symbol">⌘</span>
         <span className="grow">
-          <strong>{data.entry.label}</strong>
+          <strong title={shortcutTitle(data.entry, data.target)}>
+            {shortcutTitle(data.entry, data.target)}
+          </strong>
           <small>{data.entry.group}</small>
         </span>
+        {data.entry.shellName && (
+          <span
+            className="jump-command"
+            title={"PowerShell jump command: " + data.entry.shellName}
+          >
+            {data.entry.shellName}
+          </span>
+        )}
         <span
           className={"status-dot " + (data.exists ? "good" : "bad")}
           title={data.exists ? "Folder available" : "Folder missing"}
@@ -63,7 +74,7 @@ function RepoCard({ data }: NodeProps<CardNode>) {
       )}
       <Actions entry={data.entry} notify={data.notify} />
       <div className="card-foot nodrag nopan">
-        <span>{data.entry.shellName || "Folder shortcut"}</span>
+        <span>Folder shortcut</span>
         <button onClick={data.edit}>{data.exists ? "Edit" : "Repair"}</button>
         <button onClick={data.remove}>Remove</button>
       </div>
@@ -131,6 +142,8 @@ function Board(props: BoardProps) {
           !!query &&
           !(
             entry.label +
+            " " +
+            (entry.shellName || "") +
             " " +
             entry.group +
             " " +

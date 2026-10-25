@@ -130,7 +130,7 @@ export async function discover(
           modified: stat.mtime.toISOString(),
         });
       }
-      if (depth >= root.depth) return;
+      if (isRepo || depth >= root.depth) return;
       for (const entry of entries) {
         if (ignored.has(entry.name.toLowerCase()) || entry.name.startsWith("."))
           continue;
