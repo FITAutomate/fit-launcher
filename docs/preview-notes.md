@@ -1,6 +1,6 @@
 Portable Windows x64 preview of FIT Launcher.
 
-New in preview.4:
+New in preview.5:
 
 - **Readable ordered cards:** Auto arrange fills the window with full-size cards and vertical scrolling. Drag a card to reorder while others move aside. Fit all remains a zoomed-out overview.
 - **Project names and jumps:** Card headings default to the folder name when an imported title is only its jump command; descriptive names remain editable. Jump commands appear separately in blue beside the status dot and can be searched.
@@ -10,7 +10,7 @@ New in preview.4:
 
 Send feedback opens a pre-filled GitHub issue for you to review and submit in your browser. No workspace, paths or logs are attached automatically.
 
-Download **FIT-Launcher-0.1.0-preview.4-windows-x64.zip**, extract the whole folder, then open **FIT Launcher/app/FIT Launcher.exe**. The automatic source-code archives are not runnable packages.
+Download **FIT-Launcher-0.1.0-preview.5-windows-x64.zip**, extract the whole folder, then open **FIT Launcher/app/FIT Launcher.exe**. The automatic source-code archives are not runnable packages.
 
 Choose your project directories in the welcome screen. Discover repositories, add shortcuts to the movable Launch board, and jump into Explorer, your editor, a terminal or the GitHub repo page. Launcher stays available while you close the external tools yourself. Ports shows live Windows listeners and optional local/connected assignments.
 

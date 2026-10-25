@@ -4,7 +4,7 @@ A portable Windows home for quick repository tasks. Keep Launcher open, jump int
 
 ## Run the preview
 
-1. Open [Releases](https://github.com/FITAutomate/fit-launcher/releases) and download **FIT-Launcher-0.1.0-preview.4-windows-x64.zip**. GitHub's automatic “Source code” ZIP is for developers and does not contain the runnable app.
+1. Open [Releases](https://github.com/FITAutomate/fit-launcher/releases) and download **FIT-Launcher-0.1.0-preview.5-windows-x64.zip**. GitHub's automatic “Source code” ZIP is for developers and does not contain the runnable app.
 2. Extract the **whole** `FIT Launcher` folder to a writable location.
 3. Open **`FIT Launcher/app/FIT Launcher.exe`**.
 4. Choose directories in the welcome screen. Open **Discovered**, then add projects to **Launch**. Ordinary folders can be bookmarked with **Add shortcut**.
