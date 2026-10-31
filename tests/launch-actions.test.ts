@@ -17,6 +17,7 @@ vi.mock("electron", () => ({
 import { shell } from "electron";
 import { launchAction } from "../src/main/launch-actions";
 import { newWorkspace } from "../src/shared/schema";
+import { powershell } from "../src/main/windows";
 afterEach(() => vi.restoreAllMocks());
 test("all actions resolve the saved ID and keep literal folder data out of command text", async () => {
   const dir = await fs.mkdtemp(
@@ -53,10 +54,8 @@ test("all actions resolve the saved ID and keep literal folder data out of comma
     );
     await launchAction(w, "one", "terminal");
     expect(spawn).toHaveBeenCalledWith(
-      "wt.exe",
+      powershell(),
       expect.arrayContaining([
-        "-d",
-        dir,
         "-File",
         path.resolve("resources/windows/terminal.ps1"),
         "-Folder",
@@ -71,24 +70,20 @@ test("all actions resolve the saved ID and keep literal folder data out of comma
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
-test("missing Windows Terminal falls back to an independent PowerShell with cwd as data", async () => {
+test("Terminal starts PowerShell directly with cwd as data and does not invoke wt.exe", async () => {
   const w = newWorkspace();
   w.launches = [
     { id: "one", label: "one", group: "demo", absolutePath: os.tmpdir() },
   ];
-  const spawn = vi
-    .mocked(childProcess.spawn)
-    .mockImplementation((exe: string) => {
-      const child = new childProcess.ChildProcess();
-      queueMicrotask(() =>
-        exe === "wt.exe"
-          ? child.emit("error", new Error("not installed"))
-          : child.emit("spawn"),
-      );
-      return child;
-    });
+  const spawn = vi.mocked(childProcess.spawn).mockImplementation(() => {
+    const child = new childProcess.ChildProcess();
+    queueMicrotask(() => child.emit("spawn"));
+    return child;
+  });
   await launchAction(w, "one", "terminal");
-  expect(spawn.mock.calls[1][1]).toEqual([
+  expect(spawn).toHaveBeenCalledTimes(1);
+  expect(spawn.mock.calls[0][0]).toBe(powershell());
+  expect(spawn.mock.calls[0][1]).toEqual([
     "-NoExit",
     "-ExecutionPolicy",
     "Bypass",
@@ -97,5 +92,19 @@ test("missing Windows Terminal falls back to an independent PowerShell with cwd 
     "-Folder",
     os.tmpdir(),
   ]);
-  expect(spawn.mock.calls[1][2]?.cwd).toBe(path.resolve(os.tmpdir()));
+  expect(spawn.mock.calls[0][2]?.cwd).toBe(path.resolve(os.tmpdir()));
+});
+test("a shell launch error reaches the caller", async () => {
+  const w = newWorkspace();
+  w.launches = [
+    { id: "one", label: "one", group: "demo", absolutePath: os.tmpdir() },
+  ];
+  vi.mocked(childProcess.spawn).mockImplementation(() => {
+    const child = new childProcess.ChildProcess();
+    queueMicrotask(() => child.emit("error", new Error("Shell unavailable")));
+    return child;
+  });
+  await expect(launchAction(w, "one", "terminal")).rejects.toThrow(
+    "Shell unavailable",
+  );
 });
