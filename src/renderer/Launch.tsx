@@ -288,7 +288,7 @@ function Board(props: BoardProps) {
         nodesConnectable={false}
         deleteKeyCode={null}
       >
-        <Background gap={22} size={1.5} color="#2a3548" />
+        <Background gap={22} size={1.5} color="var(--canvas-dot)" />
         <Controls showInteractive={false} fitViewOptions={fitOptions} />
       </ReactFlow>
       <details className="accessible-list">
