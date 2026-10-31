@@ -27,6 +27,8 @@ Card headings use the folder name when an imported title is just its jump comman
 
 Launcher stays open after actions. Closing its window hides it to the tray; click the tray icon to restore it. **Quit** in the tray exits Launcher and leaves your projects running. Start with Windows is optional and off by default.
 
+Use **Appearance** in the sidebar to choose **System**, **Light** or **Dark**. System is the initial setting and follows Windows app appearance changes while Launcher is open. Light and Dark override Windows. Your choice is saved with the portable profile and restored when you reopen Launcher.
+
 Use **Send feedback** in the sidebar to report a problem, idea, question or something that worked well. Choose the app area and impact, then describe it. Launcher opens a pre-filled issue in this repository; review and submit it in your browser using your own GitHub account. It includes only the form fields plus app/Windows version, with no automatic workspace, paths or logs. Oversized messages remain editable so you can shorten the summary and add details on GitHub.
 
 ## Your data

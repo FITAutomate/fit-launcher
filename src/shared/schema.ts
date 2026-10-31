@@ -19,8 +19,10 @@ export const LaunchSchema = z
     githubUrl: z.string().optional(),
   })
   .refine((x) => !!x.absolutePath || !!x.rootId, "A folder is required");
+export const ThemeSchema = z.enum(["system", "light", "dark"]);
 export const WorkspaceSchema = z.object({
   schemaVersion: z.literal(1),
+  theme: ThemeSchema.default("system"),
   setupComplete: z.boolean().default(false),
   roots: z.array(RootSchema).default([]),
   launches: z.array(LaunchSchema).default([]),
