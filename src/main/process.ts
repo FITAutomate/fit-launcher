@@ -32,13 +32,7 @@ export async function openTerminal(folder: string, bootstrap: string) {
     "-Folder",
     folder,
   ];
-  try {
-    await launchProcess(
-      "wt.exe",
-      ["-d", folder, powershell(), ...args],
-      folder,
-    );
-  } catch {
-    await launchProcess(powershell(), args, folder);
-  }
+  // Let Windows use its configured console host. Passing a shell command through
+  // wt.exe adds another argument parser and can break portable paths with spaces.
+  await launchProcess(powershell(), args, folder);
 }

@@ -15,6 +15,8 @@ The preview is tested on **Windows 11 x64**, Node 24.12.0 for development and El
 
 Disposable-listener tests call the production Stop helper through the UI. They record created PIDs, verify termination, reuse the port with a new process, verify stale-owner refusal and clean up only fixture-owned processes. Tests do not kill existing local services or touch a user's shell profile.
 
+The terminal integration test clicks the real card action with a portable app path containing spaces and a project path containing Unicode, apostrophes, brackets and shell punctuation. Its fixture helper must execute and report the exact folder, while Launcher stays visible. PowerShell starts directly with literal file/folder arguments; Windows supplies the configured console host, avoiding a second `wt.exe` command-line parser.
+
 Appearance coverage: `tests/theme.test.ts` checks System defaults for new and legacy profiles, invalid values and profile save/reload/transfer. `tests/theme.spec.ts` checks the initial Windows preference, emulated live system color-scheme changes, Light/Dark overrides, restart persistence and return to System. It captures both palettes across Launch, Discovered, Ports and Settings using an isolated fixture profile. System changes are emulated without modifying Windows settings.
 
 Isolated app profiles are not a pristine OS test. Windows Sandbox was unavailable on the local test host; a clean Windows machine/VM run has **not** been performed. Host tools, drivers and policies may differ from an attendee's machine. The app is unsigned; downloaded-file reputation behavior depends on Windows and device policy.
