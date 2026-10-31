@@ -11,6 +11,8 @@ The runnable artifact is `out/FIT-Launcher-<version>-windows-x64.zip` plus its `
 
 The `Windows checks` workflow repeats the build on pull requests with read-only repository permissions. Pushing a `v<package version>` tag runs `Windows preview release` and creates a **draft prerelease** with ZIP and checksum. The release job alone has content-write permission. Workflow dispatch uses the same package version and refuses to overwrite an existing release.
 
+Temporary `windows-preview` CI ZIPs and checksums expire after 14 days. This does not change log retention or expire ZIPs attached to GitHub Releases.
+
 ## Validate the actual download
 
 Download the draft assets with GitHub CLI. Verify:
