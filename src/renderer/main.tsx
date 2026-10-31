@@ -8,6 +8,7 @@ import type {
   Workspace,
   Layout,
 } from "../shared/schema";
+import { ThemeSchema } from "../shared/schema";
 import LaunchBoard from "./Launch";
 import Discovered from "./Discovered";
 import Ports from "./Ports";
@@ -21,6 +22,7 @@ function App() {
     [feedback, setFeedback] = React.useState(false),
     [query, setQuery] = React.useState(""),
     [settings, setSettings] = React.useState(false),
+    [themeSaving, setThemeSaving] = React.useState(false),
     [wizard, setWizard] = React.useState(false),
     [editing, setEditing] = React.useState<{
       entry?: Launch;
@@ -141,6 +143,28 @@ function App() {
             <br />
             Your launcher stays here.
           </p>
+          <label className="theme-switcher">
+            Appearance
+            <select
+              value={state.workspace.theme}
+              disabled={themeSaving}
+              onChange={async (event) => {
+                const theme = ThemeSchema.parse(event.target.value);
+                setThemeSaving(true);
+                try {
+                  await save({ ...state.workspace, theme });
+                } catch (error) {
+                  notify(`Could not save appearance: ${String(error)}`, true);
+                } finally {
+                  setThemeSaving(false);
+                }
+              }}
+            >
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
           <button
             onClick={() => {
               setWizard(false);

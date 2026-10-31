@@ -6,6 +6,7 @@ import {
   Tray,
   Menu,
   nativeImage,
+  nativeTheme,
   shell,
 } from "electron";
 import fs from "node:fs/promises";
@@ -67,6 +68,7 @@ async function listeners(fresh = false) {
 }
 async function state(): Promise<AppState> {
   await store.refresh();
+  nativeTheme.themeSource = store.workspace.theme;
   const resolved: AppState["resolved"] = {};
   await Promise.all(
     store.workspace.launches.map(async (entry) => {
@@ -127,19 +129,25 @@ else {
         app.exit(1);
         return;
       }
+      nativeTheme.themeSource = store.workspace.theme;
+      const backgroundColor = () =>
+        nativeTheme.shouldUseDarkColors ? "#0d1320" : "#f4f6fb";
       win = new BrowserWindow({
         width: 1350,
         height: 930,
         minWidth: 850,
         minHeight: 600,
         title: "FIT Launcher",
-        backgroundColor: "#101722",
+        backgroundColor: backgroundColor(),
         webPreferences: {
           preload: path.join(__dirname, "preload.cjs"),
           contextIsolation: true,
           nodeIntegration: false,
           sandbox: true,
         },
+      });
+      nativeTheme.on("updated", () => {
+        if (!win.isDestroyed()) win.setBackgroundColor(backgroundColor());
       });
       win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
       win.webContents.on("will-navigate", (e) => e.preventDefault());
