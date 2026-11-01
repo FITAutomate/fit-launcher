@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
-import { powershell } from "./windows";
+import path from "node:path";
+import { windowsHelper } from "./windows";
 export function launchProcess(
   exe: string,
   args: string[],
@@ -23,16 +24,9 @@ export function launchProcess(
   });
 }
 export async function openTerminal(folder: string, bootstrap: string) {
-  const args = [
-    "-NoExit",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    bootstrap,
-    "-Folder",
-    folder,
-  ];
-  // Let Windows use its configured console host. Passing a shell command through
-  // wt.exe adds another argument parser and can break portable paths with spaces.
-  await launchProcess(powershell(), args, folder);
+  await windowsHelper(
+    path.dirname(path.dirname(bootstrap)),
+    "open-terminal.ps1",
+    ["-Folder", folder, "-Bootstrap", bootstrap],
+  );
 }

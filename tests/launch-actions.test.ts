@@ -14,16 +14,24 @@ vi.mock("electron", () => ({
     openExternal: vi.fn(async () => {}),
   },
 }));
+vi.mock("../src/main/windows", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/main/windows")>()),
+  windowsHelper: vi.fn(),
+}));
 import { shell } from "electron";
 import { launchAction } from "../src/main/launch-actions";
 import { newWorkspace } from "../src/shared/schema";
-import { powershell } from "../src/main/windows";
-afterEach(() => vi.restoreAllMocks());
+import { windowsHelper } from "../src/main/windows";
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.mocked(windowsHelper).mockReset();
+});
 test("all actions resolve the saved ID and keep literal folder data out of command text", async () => {
   const dir = await fs.mkdtemp(
     path.join(os.tmpdir(), "fit O'Brien é [x] & $(never)-"),
   );
   try {
+    vi.mocked(windowsHelper).mockResolvedValue({ pid: 123 });
     const w = newWorkspace();
     w.editor = "C:\\Tools\\Editor.exe";
     w.launches = [
@@ -53,15 +61,15 @@ test("all actions resolve the saved ID and keep literal folder data out of comma
       expect.objectContaining({ cwd: dir, shell: false }),
     );
     await launchAction(w, "one", "terminal");
-    expect(spawn).toHaveBeenCalledWith(
-      powershell(),
-      expect.arrayContaining([
-        "-File",
-        path.resolve("resources/windows/terminal.ps1"),
+    expect(windowsHelper).toHaveBeenCalledWith(
+      path.resolve("resources"),
+      "open-terminal.ps1",
+      [
         "-Folder",
         dir,
-      ]),
-      expect.objectContaining({ cwd: dir, shell: false }),
+        "-Bootstrap",
+        path.resolve("resources/windows/terminal.ps1"),
+      ],
     );
     await expect(launchAction(w, "unknown", "editor")).rejects.toThrow(
       "not found",
@@ -70,7 +78,7 @@ test("all actions resolve the saved ID and keep literal folder data out of comma
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
-test("Terminal starts PowerShell directly with cwd as data and does not invoke wt.exe", async () => {
+test("Terminal requests a new interactive console with paths passed as data", async () => {
   const w = newWorkspace();
   w.launches = [
     { id: "one", label: "one", group: "demo", absolutePath: os.tmpdir() },
@@ -80,30 +88,26 @@ test("Terminal starts PowerShell directly with cwd as data and does not invoke w
     queueMicrotask(() => child.emit("spawn"));
     return child;
   });
+  vi.mocked(windowsHelper).mockResolvedValue({ pid: 123 });
   await launchAction(w, "one", "terminal");
-  expect(spawn).toHaveBeenCalledTimes(1);
-  expect(spawn.mock.calls[0][0]).toBe(powershell());
-  expect(spawn.mock.calls[0][1]).toEqual([
-    "-NoExit",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    path.resolve("resources/windows/terminal.ps1"),
-    "-Folder",
-    os.tmpdir(),
-  ]);
-  expect(spawn.mock.calls[0][2]?.cwd).toBe(path.resolve(os.tmpdir()));
+  expect(spawn).not.toHaveBeenCalled();
+  expect(windowsHelper).toHaveBeenCalledExactlyOnceWith(
+    path.resolve("resources"),
+    "open-terminal.ps1",
+    [
+      "-Folder",
+      os.tmpdir(),
+      "-Bootstrap",
+      path.resolve("resources/windows/terminal.ps1"),
+    ],
+  );
 });
 test("a shell launch error reaches the caller", async () => {
   const w = newWorkspace();
   w.launches = [
     { id: "one", label: "one", group: "demo", absolutePath: os.tmpdir() },
   ];
-  vi.mocked(childProcess.spawn).mockImplementation(() => {
-    const child = new childProcess.ChildProcess();
-    queueMicrotask(() => child.emit("error", new Error("Shell unavailable")));
-    return child;
-  });
+  vi.mocked(windowsHelper).mockRejectedValue(new Error("Shell unavailable"));
   await expect(launchAction(w, "one", "terminal")).rejects.toThrow(
     "Shell unavailable",
   );
