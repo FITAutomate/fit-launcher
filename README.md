@@ -52,7 +52,7 @@ Settings provides versioned profile export/import with preview and backups. Expo
 
 ## Tools and discovery
 
-VS Code is detected in its normal user/system installation locations. Configure another editor `.exe` in Settings. Terminal starts Windows PowerShell in the selected folder using the console host configured in Windows (Windows Terminal or Console Host). Missing tools or remotes produce an error on the card action. GitHub HTTPS and SSH remotes are normalized to the repository page; no account or API token is needed.
+VS Code is detected in its normal user/system installation locations. Configure another editor `.exe` in Settings. Terminal opens an independent, visible Windows PowerShell session in the selected folder using the console host configured in Windows (Windows Terminal or Console Host). The shell stays open until you close it, even if you quit Launcher. Missing tools or remotes produce an error on the card action. GitHub HTTPS and SSH remotes are normalized to the repository page; no account or API token is needed.
 
 Directory scan depth defaults to 4 (editable up to 12); scans are cancellable and capped at 50,000 visited directories. Dependency/build folders and hidden subdirectories are skipped, and real paths prevent junction loops. Hints use `package.json`, `pyproject.toml`, `.csproj`, `compose.yaml` and `docker-compose.yml`. Manifests are never executed.
 
