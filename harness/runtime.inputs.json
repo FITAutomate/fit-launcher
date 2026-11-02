@@ -1,0 +1,23 @@
+{
+  "status": "blocked-pending-windows-adapter-and-calibration",
+  "description": "Planning data, not an executable shared scenario. FIT Launcher is Windows Electron, not HTTP. Map a finite Node/Playwright adapter to the pinned runtime contract before delivery.",
+  "scenarios": "harness/END-TO-END.md",
+  "runtime_host_contract": "factory/RUNTIME_HOST.md",
+  "candidate_platform": "Windows x64 with interactive desktop",
+  "local_evidence_command": "npm run test:electron",
+  "holdout": "",
+  "requirements": {
+    "holdout_path": "Choose provider first; Codex/Pi/mixed require an explicit external private path.",
+    "candidate_identity": "Bind revision and artifact digest to observed execution.",
+    "fresh_environment_per": ["runtime", "holdout", "retry", "mutation"],
+    "fresh_profile": true,
+    "fixture_owned_processes_only": true,
+    "assertion_evidence_required": true,
+    "cleanup": "Verify cleanup of owned app instances, external fixture windows, and listeners.",
+    "calibration": [
+      "baseline verified",
+      "relevant fault failed",
+      "wrong identity inconclusive"
+    ]
+  }
+}
