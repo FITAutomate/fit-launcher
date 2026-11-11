@@ -14,8 +14,9 @@ const files = execFileSync(
 )
   .split("\0")
   .filter(Boolean);
+// .archon/sdlc/ holds the Archon SDLC pack policy (maintainers), which must live on main.
 const allowed =
-  /^(?:src\/|resources\/|scripts\/|tests\/|docs\/|\.github\/workflows\/|(?:package(?:-lock)?|tsconfig)\.json$|(?:forge\.config\.cjs|(?:playwright|vitest)\.config\.ts|README\.md|CONTRIBUTING\.md|LICENSE|\.gitignore|\.gitattributes|\.prettierignore)$)/;
+  /^(?:src\/|resources\/|\.archon\/sdlc\/|scripts\/|tests\/|docs\/|\.github\/workflows\/|(?:package(?:-lock)?|tsconfig)\.json$|(?:forge\.config\.cjs|(?:playwright|vitest)\.config\.ts|README\.md|CONTRIBUTING\.md|LICENSE|\.gitignore|\.gitattributes|\.prettierignore)$)/;
 const privatePatterns = [
   /[A-Z]:[\\/](?:Users|dev|fit-automate-org|Vaults)[\\/]/i,
   /gh[pousr]_[A-Za-z0-9]{30,}/,
