@@ -6,6 +6,13 @@ import type {
   PortSnapshot,
 } from "../shared/schema";
 import { Modal, type Common } from "./ui";
+import {
+  outsideRanges,
+  portCells,
+  portStates,
+  rangeCounts,
+  type PortCell,
+} from "./port-cells";
 
 export default function Ports({
   state,
@@ -119,6 +126,25 @@ export default function Ports({
     ) || [];
   const selectedOwners =
     snapshot?.listeners.filter((x) => x.port === selected) || [];
+  const cellFor = snapshot && portCells(snapshot),
+    outside = snapshot ? outsideRanges(snapshot) : [];
+  const cellButton = (cell: PortCell) => (
+    <button
+      title={cell.label}
+      aria-label={cell.label}
+      className={cell.state}
+      key={cell.port}
+      onClick={() => {
+        setSelected(cell.port);
+        setLookup(String(cell.port));
+      }}
+    >
+      <span className="cell-mark" aria-hidden="true">
+        {portStates[cell.state].mark}
+      </span>
+      {cell.port}
+    </button>
+  );
   return (
     <div className="ports-page">
       <div className="page-intro">
@@ -213,44 +239,67 @@ export default function Ports({
               )}
             </div>
           )}
-          {Object.entries(snapshot?.ranges || {}).map(([name, range]) => (
-            <div className="range" key={name}>
-              <div className="section-title">
-                <h4>{name}</h4>
-                <small>
-                  {range.start}–{range.end}
-                </small>
-              </div>
-              <p className="muted">{range.note}</p>
-              <div className="port-cells">
-                {Array.from(
-                  { length: Math.min(range.end - range.start + 1, 120) },
-                  (_, i) => range.start + i,
-                ).map((port) => (
-                  <button
-                    title={"Inspect " + port}
-                    className={
-                      snapshot?.listeners.some((x) => x.port === port)
-                        ? "occupied"
-                        : ""
-                    }
-                    key={port}
-                    onClick={() => {
-                      setSelected(port);
-                      setLookup(String(port));
-                    }}
-                  >
-                    {port}
-                  </button>
-                ))}
-              </div>
-              {range.end - range.start >= 120 && (
-                <small className="muted">
-                  First 120 ports shown. Use lookup for the rest.
-                </small>
+          {snapshot && cellFor && (
+            <>
+              {(Object.keys(snapshot.ranges).length > 0 ||
+                outside.length > 0) && (
+                <ul className="port-legend" aria-label="Port states">
+                  {Object.entries(portStates).map(
+                    ([state, { mark, label }]) => (
+                      <li key={state}>
+                        <span
+                          className={"cell-mark " + state}
+                          aria-hidden="true"
+                        >
+                          {mark}
+                        </span>
+                        {label}
+                      </li>
+                    ),
+                  )}
+                </ul>
               )}
-            </div>
-          ))}
+              {Object.entries(snapshot.ranges).map(([name, range]) => {
+                const counts = rangeCounts(range, snapshot);
+                return (
+                  <div className="range" key={name}>
+                    <div className="section-title">
+                      <h4>{name}</h4>
+                      <small>
+                        {range.start}–{range.end}
+                      </small>
+                    </div>
+                    <p className="range-counts">
+                      {counts.known} known · {counts.live} live · {counts.free}{" "}
+                      free
+                    </p>
+                    <p className="muted">{range.note}</p>
+                    <div className="port-cells">
+                      {Array.from(
+                        { length: Math.min(range.end - range.start + 1, 120) },
+                        (_, i) => cellButton(cellFor(range.start + i)),
+                      )}
+                    </div>
+                    {range.end - range.start >= 120 && (
+                      <small className="muted">
+                        First 120 ports shown. Use lookup for the rest.
+                      </small>
+                    )}
+                  </div>
+                );
+              })}
+              {outside.length > 0 && (
+                <div className="range">
+                  <div className="section-title">
+                    <h4>Outside declared ranges</h4>
+                  </div>
+                  <div className="port-cells">
+                    {outside.map((port) => cellButton(cellFor(port)))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           <details className="listener-section">
             <summary>
               Windows and system listeners ({snapshot?.systems.length || 0})
