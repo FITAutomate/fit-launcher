@@ -253,7 +253,7 @@ export default function Ports({
                         >
                           {mark}
                         </span>
-                        {label}
+                        <span>{label}</span>
                       </li>
                     ),
                   )}
