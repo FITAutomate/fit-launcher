@@ -616,11 +616,84 @@ nav button.active {
   font-size: 10px;
   color: light-dark(#536682, #7486a5);
   background: light-dark(#f1f5fb, #111e2e);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
 }
-.port-cells button.occupied {
+.port-cells .cell-mark {
+  min-height: 1.3em;
+  font-size: 13px;
+  font-weight: 600;
+}
+.port-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+}
+.port-legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.port-legend .cell-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid light-dark(#bbcbe0, #3b4b65);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: light-dark(#536682, #7486a5);
+  background: light-dark(#f1f5fb, #111e2e);
+}
+.range-counts {
+  color: light-dark(#425a80, #9eb0cf);
+}
+.port-cells .dead-path,
+.port-legend .dead-path {
+  color: light-dark(#97283e, #ffc0c0);
+  border-color: light-dark(#cd94a1, #825160);
+  background: light-dark(#ffe9ec, #472a34);
+}
+.port-cells .wrong-process,
+.port-legend .wrong-process {
+  color: light-dark(#7f501a, #f0be82);
+  border-color: light-dark(#b8364f, #d9677c);
+  background: light-dark(#fff4df, #352d29);
+}
+.port-cells .listening,
+.port-legend .listening {
   color: light-dark(#146546, #76e0bf);
   border-color: light-dark(#8bbca6, #306451);
   background: light-dark(#e0f3eb, #1d3c36);
+}
+.port-cells .reserved-down,
+.port-legend .reserved-down {
+  border-style: dashed;
+  border-color: light-dark(#8a9bb5, #5b6d8c);
+}
+.port-cells .assigned-down,
+.port-legend .assigned-down {
+  color: light-dark(#243f84, #eef1ff);
+  border-color: light-dark(#435bc7, #6d81ed);
+}
+.port-cells .unregistered,
+.port-legend .unregistered {
+  color: light-dark(#7f501a, #f0be82);
+  border-color: light-dark(#c5a16d, #70583b);
+  background: light-dark(#fff4df, #352d29);
+}
+.port-cells .service,
+.port-legend .service {
+  color: light-dark(#5d6573, #a3abb8);
+  border-color: light-dark(#b9bfc9, #4a505c);
+  background: light-dark(#e6e8ec, #23272e);
 }
 .listener-section {
   margin-top: 22px;
