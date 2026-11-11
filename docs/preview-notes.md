@@ -1,16 +1,14 @@
 Portable Windows x64 preview of FIT Launcher.
 
-New in preview.5:
+New in preview.6:
 
-- **Readable ordered cards:** Auto arrange fills the window with full-size cards and vertical scrolling. Drag a card to reorder while others move aside. Fit all remains a zoomed-out overview.
-- **Project names and jumps:** Card headings default to the folder name when an imported title is only its jump command; descriptive names remain editable. Jump commands appear separately in blue beside the status dot and can be searched.
-- **Focused discovery:** Git repositories are shown by default. Scanning stops at a repository or worktree root instead of listing its internal app/agent folders. Broader project-folder discovery is optional outside repositories.
-- **Clear shell setup:** Saving a jump name does not by itself install a PowerShell command. The editor explains optional PowerShell integration and profile setup.
-- **Portable first run:** Use the welcome wizard on another PC without copying an existing personal data folder.
+- **Appearance:** Choose System, Light or Dark in the sidebar. System follows Windows while Launcher is open. Your choice is saved with the portable profile.
+- **Terminal from any folder:** Terminal opens folders whose paths contain spaces.
+- **Visible terminals:** Terminal opens an independent, visible Windows PowerShell session that stays open after you quit Launcher.
 
 Send feedback opens a pre-filled GitHub issue for you to review and submit in your browser. No workspace, paths or logs are attached automatically.
 
-Download **FIT-Launcher-0.1.0-preview.5-windows-x64.zip**, extract the whole folder, then open **FIT Launcher/app/FIT Launcher.exe**. The automatic source-code archives are not runnable packages.
+Download **FIT-Launcher-0.1.0-preview.6-windows-x64.zip**, extract the whole folder, then open **FIT Launcher/app/FIT Launcher.exe**. The automatic source-code archives are not runnable packages.
 
 Choose your project directories in the welcome screen. Discover repositories, add shortcuts to the movable Launch board, and jump into Explorer, your editor, a terminal or the GitHub repo page. Launcher stays available while you close the external tools yourself. Ports shows live Windows listeners and optional local/connected assignments.
 
@@ -18,4 +16,4 @@ The ZIP contains generic app files; your sibling `data` folder is created locall
 
 This preview is unsigned. Windows reputation or organizational policies may warn or block execution; follow your device policy. Validation covers Windows 11 x64 isolated profiles and Windows CI, not a pristine OS installation. See the repository's `docs/validation.md` for evidence and limits.
 
-This preview is built from the reviewed source in [PR #7](https://github.com/FITAutomate/fit-launcher/pull/7); the PR remains open at publication.
+This preview is built from `main` after PRs #11, #13 and #15.
