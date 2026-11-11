@@ -1,18 +1,29 @@
 # Working on FIT Launcher
 
-Read `CONTRIBUTING.md` for product and code boundaries.
-For factory setup, feature work, reviews, or merges, read `engineering.md`,
-`MISSION.md`, and `FACTORY.md` before acting.
+Read `CONTRIBUTING.md` for product scope, code boundaries and the check commands.
+Read `engineering.md` before you change code. `MISSION.md` holds the product
+direction and what is out of scope.
 
-The factory is a supervised experiment on `dev`. Start feature branches from
-`dev` and target PRs to `dev`. John owns promotion to `main` and releases.
-Use pinned shared Archon SDLC workflows for factory AI steps. Local scripts
-provide ordinary runtime resources and deterministic validation only.
+## Branches
 
-Keep the preview and personal profiles separate from experiments. Test with
-fictional data, isolated profiles, and fixture-owned processes. Builders must not
-read `.factory/holdout/` or external holdout scenarios.
+- `dev` is the default branch. Start every branch from `dev` and target every PR
+  to `dev`.
+- John promotes `dev` to `main` and publishes releases. Do not open PRs to `main`
+  and do not push tags.
 
-Diagnostics, provider availability, branch propagation, holdout isolation, and
-Windows runtime calibration are prerequisites, not established facts. Keep
-scheduling off and follow the initial human checkpoints in `FACTORY.md`.
+## Validation
+
+FIT Launcher is a Windows Electron app. The "Windows checks" CI workflow is the
+only place the Electron and packaged-app tests run. A change is not done until
+that workflow passes on the PR.
+
+- Run `npm run format:check`, `npm run typecheck` and `npm test` before you push.
+- When you add or change an Electron test (`tests/*.spec.ts`), make each selector
+  match markup that the code renders. Read the component and the test together.
+- Do not weaken, skip or retry a failing test to make CI pass. Fix the cause.
+
+## Data
+
+Test with fictional data, isolated profiles and processes that the test starts.
+Never commit a real profile, registry, log, token or screenshot of a personal
+workspace.
