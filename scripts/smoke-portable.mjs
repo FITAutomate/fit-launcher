@@ -4,6 +4,20 @@ import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import AdmZip from "adm-zip";
+import { execFileSync } from "node:child_process";
+// Names every process still running from under `folder`, so an EPERM on a move
+// or replace says which process holds the app folder after Quit.
+const holders = (folder) =>
+  execFileSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like ($env:HOLD_ROOT + '*') -or $_.CommandLine -like ('*' + $env:HOLD_ROOT + '*') } | ForEach-Object { '{0} {1} {2}' -f $_.ProcessId, $_.Name, $_.CommandLine }",
+    ],
+    { encoding: "utf8", env: { ...process.env, HOLD_ROOT: folder } },
+  ).trim() || "(no process found)";
 const pkg = JSON.parse(await fs.readFile("package.json", "utf8"));
 const source = path.resolve(
   process.argv[2] ||
@@ -85,7 +99,28 @@ try {
     }),
   );
   const moved = path.join(temp, "Moved folder é");
-  await fs.rename(first, moved);
+  const quitAt = Date.now();
+  try {
+    await fs.rename(first, moved);
+  } catch (e) {
+    if (e.code !== "EPERM") throw e;
+    const held = holders(first);
+    let released = "not within 30 s";
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      try {
+        await fs.rename(first, moved);
+        released = `${Date.now() - quitAt} ms after close`;
+        break;
+      } catch {}
+    }
+    throw Error(
+      `App folder still held after Quit; released ${released}.
+Holders:
+${held}`,
+      { cause: e },
+    );
+  }
   const state = await check(moved);
   if (
     !state.workspace.setupComplete ||
