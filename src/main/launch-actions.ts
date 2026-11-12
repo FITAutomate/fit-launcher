@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { launchProcess, openTerminal } from "./process";
-import { shell } from "electron";
+import { clipboard, shell } from "electron";
 import { resolveLaunch } from "./paths";
 import { githubUrl, gitRemote } from "./discovery";
 import type { Workspace, Action } from "../shared/schema";
@@ -34,6 +34,10 @@ export async function launchAction(
   const entry = workspace.launches.find((x) => x.id === id);
   if (!entry) throw Error("Shortcut not found.");
   const folder = resolveLaunch(workspace, entry);
+  if (action === "copy-path") {
+    clipboard.writeText(folder);
+    return;
+  }
   if (!(await fs.stat(folder)).isDirectory())
     throw Error("Repair this shortcut: its folder is missing.");
   if (action === "explorer") {

@@ -56,36 +56,41 @@ export function Actions({
 }) {
   return (
     <div className="actions nodrag nopan">
-      {(["explorer", "editor", "terminal", "github"] as const).map((action) => (
-        <button
-          key={action}
-          onClick={() =>
-            window.launcher
-              .launch(entry.id, action)
-              .then(() =>
-                notify(
-                  "Opened " +
-                    {
-                      explorer: "Explorer",
-                      editor: "editor",
-                      terminal: "terminal",
-                      github: "GitHub",
-                    }[action],
-                ),
-              )
-              .catch((e) => notify(String(e), true))
-          }
-        >
-          {
+      {(["explorer", "editor", "terminal", "github", "copy-path"] as const).map(
+        (action) => (
+          <button
+            key={action}
+            onClick={() =>
+              window.launcher
+                .launch(entry.id, action)
+                .then(() =>
+                  notify(
+                    action === "copy-path"
+                      ? "Path copied"
+                      : "Opened " +
+                          {
+                            explorer: "Explorer",
+                            editor: "editor",
+                            terminal: "terminal",
+                            github: "GitHub",
+                          }[action],
+                  ),
+                )
+                .catch((e) => notify(String(e), true))
+            }
+          >
             {
-              explorer: "Explorer",
-              editor: "Editor",
-              terminal: "Terminal",
-              github: "GitHub",
-            }[action]
-          }
-        </button>
-      ))}
+              {
+                explorer: "Explorer",
+                editor: "Editor",
+                terminal: "Terminal",
+                github: "GitHub",
+                "copy-path": "Copy path",
+              }[action]
+            }
+          </button>
+        ),
+      )}
     </div>
   );
 }
