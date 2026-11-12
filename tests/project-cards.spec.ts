@@ -38,6 +38,14 @@ test("project title and jump command are separate; discovery stops inside reposi
           node.nextElementSibling?.classList.contains("status-dot"),
         ),
     ).toBe(true);
+    await app.evaluate(({ clipboard }) =>
+      clipboard.writeText("previous value"),
+    );
+    await card.getByRole("button", { name: "Copy path", exact: true }).click();
+    await expect(page.locator(".toast span")).toHaveText("Path copied");
+    expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe(
+      repo,
+    );
     await card.getByRole("button", { name: "Edit", exact: true }).click();
     await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
       "Actual Repo",

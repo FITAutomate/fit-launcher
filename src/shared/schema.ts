@@ -150,5 +150,6 @@ export const ActionSchema = z.enum([
   "editor",
   "terminal",
   "github",
+  "copy-path",
 ]);
 export type Action = z.infer<typeof ActionSchema>;

@@ -9,6 +9,7 @@ vi.mock("node:child_process", async (importOriginal) => ({
   spawn: vi.fn(),
 }));
 vi.mock("electron", () => ({
+  clipboard: { writeText: vi.fn() },
   shell: {
     openPath: vi.fn(async () => ""),
     openExternal: vi.fn(async () => {}),
@@ -18,7 +19,7 @@ vi.mock("../src/main/windows", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/main/windows")>()),
   windowsHelper: vi.fn(),
 }));
-import { shell } from "electron";
+import { clipboard, shell } from "electron";
 import { launchAction } from "../src/main/launch-actions";
 import { newWorkspace } from "../src/shared/schema";
 import { windowsHelper } from "../src/main/windows";
@@ -111,4 +112,41 @@ test("a shell launch error reaches the caller", async () => {
   await expect(launchAction(w, "one", "terminal")).rejects.toThrow(
     "Shell unavailable",
   );
+});
+
+test("Copy path resolves root-relative and missing absolute folders without opening tools", async () => {
+  const w = newWorkspace();
+  w.roots = [{ id: "root", path: os.tmpdir(), depth: 2 }];
+  const folder = "Fictional O'Brien é [x] & $(never)";
+  w.launches = [
+    {
+      id: "relative",
+      label: "relative",
+      group: "demo",
+      rootId: "root",
+      relativePath: folder,
+    },
+    {
+      id: "absolute",
+      label: "absolute",
+      group: "demo",
+      absolutePath: path.join(os.tmpdir(), folder),
+    },
+  ];
+  for (const id of ["relative", "absolute"]) {
+    vi.clearAllMocks();
+    await launchAction(w, id, "copy-path");
+    expect(clipboard.writeText).toHaveBeenCalledExactlyOnceWith(
+      path.join(os.tmpdir(), folder),
+    );
+    expect(shell.openPath).not.toHaveBeenCalled();
+    expect(shell.openExternal).not.toHaveBeenCalled();
+    expect(childProcess.spawn).not.toHaveBeenCalled();
+    expect(windowsHelper).not.toHaveBeenCalled();
+  }
+  vi.clearAllMocks();
+  await expect(launchAction(w, "unknown", "copy-path")).rejects.toThrow(
+    "not found",
+  );
+  expect(clipboard.writeText).not.toHaveBeenCalled();
 });
