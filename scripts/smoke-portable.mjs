@@ -5,19 +5,35 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import AdmZip from "adm-zip";
 import { execFileSync } from "node:child_process";
-// Names every process still running from under `folder`, so an EPERM on a move
-// or replace says which process holds the app folder after Quit.
-const holders = (folder) =>
+// Lists the IDs of processes whose executable or command line contains `token`
+// (the unique temp folder name), so short and long path forms both match.
+const appPids = (token) =>
   execFileSync(
     "powershell.exe",
     [
       "-NoProfile",
       "-NonInteractive",
       "-Command",
-      "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like ($env:HOLD_ROOT + '*') -or $_.CommandLine -like ('*' + $env:HOLD_ROOT + '*') } | ForEach-Object { '{0} {1} {2}' -f $_.ProcessId, $_.Name, $_.CommandLine }",
+      "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like ('*' + $env:HOLD_TOKEN + '*') -or $_.CommandLine -like ('*' + $env:HOLD_TOKEN + '*') } | ForEach-Object { '{0} {1}' -f $_.ProcessId, $_.Name }",
     ],
-    { encoding: "utf8", env: { ...process.env, HOLD_ROOT: folder } },
-  ).trim() || "(no process found)";
+    { encoding: "utf8", env: { ...process.env, HOLD_TOKEN: token } },
+  )
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => {
+      const [pid, name] = line.split(" ");
+      return { pid: Number(pid), name };
+    });
+const alive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
+let lastApp = { pids: [], closedAt: 0 };
 const pkg = JSON.parse(await fs.readFile("package.json", "utf8"));
 const source = path.resolve(
   process.argv[2] ||
@@ -72,7 +88,15 @@ const check = async (root, initial = false) => {
     if (!ports.listeners.length) throw Error("Packaged helper failed");
     return await page.evaluate(() => window.launcher.state());
   } finally {
+    // Positive control: the query must find the running app before Quit.
+    const token = path.basename(temp);
+    const pids = appPids(token);
+    if (!pids.some((p) => p.pid === app.process().pid))
+      throw Error(
+        "Process query did not find the running app: " + JSON.stringify(pids),
+      );
     await app.close();
+    lastApp = { pids, closedAt: Date.now() };
   }
 };
 try {
@@ -99,25 +123,31 @@ try {
     }),
   );
   const moved = path.join(temp, "Moved folder é");
-  const quitAt = Date.now();
   try {
     await fs.rename(first, moved);
   } catch (e) {
     if (e.code !== "EPERM") throw e;
-    const held = holders(first);
+    const atFailure = Date.now() - lastApp.closedAt;
+    const live = lastApp.pids.filter((p) => alive(p.pid));
+    const deaths = {};
     let released = "not within 30 s";
-    for (let i = 0; i < 60; i++) {
-      await new Promise((r) => setTimeout(r, 500));
+    for (let i = 0; i < 300; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      for (const p of live)
+        if (!(p.pid in deaths) && !alive(p.pid))
+          deaths[p.pid] = Date.now() - lastApp.closedAt;
       try {
         await fs.rename(first, moved);
-        released = `${Date.now() - quitAt} ms after close`;
+        released = `${Date.now() - lastApp.closedAt} ms after close`;
         break;
       } catch {}
     }
     throw Error(
-      `App folder still held after Quit; released ${released}.
-Holders:
-${held}`,
+      [
+        `App folder held after Quit. EPERM ${atFailure} ms after close; released ${released}.`,
+        `App processes before close: ${lastApp.pids.map((p) => `${p.pid} ${p.name}`).join(", ")}`,
+        `Alive at EPERM: ${live.map((p) => `${p.pid} ${p.name} (exited ${deaths[p.pid] ?? "never"} ms)`).join(", ") || "none"}`,
+      ].join("\n"),
       { cause: e },
     );
   }
