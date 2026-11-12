@@ -4,6 +4,35 @@ import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import AdmZip from "adm-zip";
+import { execFileSync } from "node:child_process";
+// Lists the IDs of processes whose executable or command line contains `token`
+// (the unique temp folder name), so short and long path forms both match.
+const appPids = (token) =>
+  execFileSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like ('*' + $env:HOLD_TOKEN + '*') -or $_.CommandLine -like ('*' + $env:HOLD_TOKEN + '*') } | ForEach-Object { '{0} {1}' -f $_.ProcessId, $_.Name }",
+    ],
+    { encoding: "utf8", env: { ...process.env, HOLD_TOKEN: token } },
+  )
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => {
+      const [pid, name] = line.split(" ");
+      return { pid: Number(pid), name };
+    });
+const alive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
 const pkg = JSON.parse(await fs.readFile("package.json", "utf8"));
 const source = path.resolve(
   process.argv[2] ||
@@ -58,9 +87,44 @@ const check = async (root, initial = false) => {
     if (!ports.listeners.length) throw Error("Packaged helper failed");
     return await page.evaluate(() => window.launcher.state());
   } finally {
+    // Positive control: the query must find the running app before Quit.
+    const token = path.basename(temp);
+    const pids = appPids(token);
+    if (!pids.some((p) => p.pid === app.process().pid))
+      throw Error(
+        "Process query did not find the running app: " + JSON.stringify(pids),
+      );
     await app.close();
+    // Quit must end every app process. Users move or replace the folder after Quit.
+    const deadline = Date.now() + 10000;
+    while (pids.some((p) => alive(p.pid)) && Date.now() < deadline)
+      await new Promise((r) => setTimeout(r, 100));
+    const left = pids.filter((p) => alive(p.pid));
+    if (left.length)
+      throw Error(
+        "App processes still running 10 s after Quit: " +
+          left.map((p) => `${p.pid} ${p.name}`).join(", "),
+      );
   }
 };
+// After Quit, with no app process left, Windows runners can still deny a folder
+// rename for a few seconds (issue #21: about 5-6 s, no app process alive). An
+// outside process, such as a file scanner, holds the folder then, not the app.
+// Retry only that error, for a bounded time, and report the wait.
+async function moveFolder(from, to) {
+  const start = Date.now();
+  for (let tries = 0; ; tries++) {
+    try {
+      await fs.rename(from, to);
+      if (tries)
+        console.log(`Folder move waited ${Date.now() - start} ms (EPERM)`);
+      return;
+    } catch (e) {
+      if (e.code !== "EPERM" || Date.now() - start > 15000) throw e;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+}
 try {
   await check(first, true);
   const workspacePath = path.join(first, "data", "workspace.json"),
@@ -85,7 +149,7 @@ try {
     }),
   );
   const moved = path.join(temp, "Moved folder é");
-  await fs.rename(first, moved);
+  await moveFolder(first, moved);
   const state = await check(moved);
   if (
     !state.workspace.setupComplete ||
