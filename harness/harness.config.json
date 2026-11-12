@@ -1,8 +1,0 @@
-{
-  "static": "npm run typecheck",
-  "unit": "npm test",
-  "unit_count_pattern": "Tests\\s+(\\d+) passed",
-  "required_checks": "check",
-  "protected_paths": "MISSION.md,FACTORY.md,FACTORY_RULES.md,AGENTS.md,engineering.md,CONTRIBUTING.md,docs/factory-*,harness/**,.factory/**,factory/**,.claude/**,.ignore,.github/workflows/**,scripts/audit-release.mjs",
-  "description": "Ordinary type/unit checks only. Required Windows CI job check also runs formatting, Electron tests, packaging, portable smoke, and release audit. Shared runtime/holdout verification, calibration, and John's acceptance remain separate. Delivery is not ready."
-}
