@@ -1,7 +1,7 @@
 # FIT Launcher mission
 
 Owner: John. Reconciled on 2026-10-31 with the existing README, CONTRIBUTING,
-and John's direction in the factory setup conversation.
+and John's direction.
 
 ## Product and audience
 
@@ -53,19 +53,17 @@ explicit designs before implementation.
 
 ## Development and acceptance
 
-Factory experimentation uses `dev`. Feature branches start from `dev` and PRs
-target `dev`. John decides when a separately reviewed change is promoted to `main`.
-Existing releases and personal profiles are not experimentation targets.
+The Archon SDLC pack builds on `dev`: branches start from `dev` and PRs target
+`dev`. John decides when `dev` is promoted to `main`. Existing releases and
+personal profiles are not experimentation targets.
 
-John drives features and approves scope and plans. Community issues may become
-an input later; an issue alone does not authorize implementation or publication.
-The first several issues require scope, plan, runtime/demo, and merge checkpoints.
-All factory AI steps use the pinned shared Archon SDLC workflows.
+John drives features and approves scope. Community issues may become an input
+later; an issue alone does not authorize implementation or publication. Until
+John changes this rule, he tries each feature on Windows and accepts it before
+it merges.
 
-Done means applicable Windows checks pass, current-candidate runtime evidence and
-independent review are available, and John accepts the customer experience.
-Ordinary test success alone is insufficient. See [FACTORY.md](FACTORY.md) and
-[the baseline](docs/factory-baseline.md).
+Done means the "Windows checks" CI passes, the pack's review is Ready, and John
+accepts the customer experience. Ordinary test success alone is insufficient.
 
 ## Human-owned decisions
 
