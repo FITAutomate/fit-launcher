@@ -33,7 +33,6 @@ const alive = (pid) => {
     return false;
   }
 };
-let lastApp = { pids: [], closedAt: 0 };
 const pkg = JSON.parse(await fs.readFile("package.json", "utf8"));
 const source = path.resolve(
   process.argv[2] ||
@@ -96,9 +95,36 @@ const check = async (root, initial = false) => {
         "Process query did not find the running app: " + JSON.stringify(pids),
       );
     await app.close();
-    lastApp = { pids, closedAt: Date.now() };
+    // Quit must end every app process. Users move or replace the folder after Quit.
+    const deadline = Date.now() + 10000;
+    while (pids.some((p) => alive(p.pid)) && Date.now() < deadline)
+      await new Promise((r) => setTimeout(r, 100));
+    const left = pids.filter((p) => alive(p.pid));
+    if (left.length)
+      throw Error(
+        "App processes still running 10 s after Quit: " +
+          left.map((p) => `${p.pid} ${p.name}`).join(", "),
+      );
   }
 };
+// After Quit, with no app process left, Windows runners can still deny a folder
+// rename for a few seconds (issue #21: about 5-6 s, no app process alive). An
+// outside process, such as a file scanner, holds the folder then, not the app.
+// Retry only that error, for a bounded time, and report the wait.
+async function moveFolder(from, to) {
+  const start = Date.now();
+  for (let tries = 0; ; tries++) {
+    try {
+      await fs.rename(from, to);
+      if (tries)
+        console.log(`Folder move waited ${Date.now() - start} ms (EPERM)`);
+      return;
+    } catch (e) {
+      if (e.code !== "EPERM" || Date.now() - start > 15000) throw e;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+}
 try {
   await check(first, true);
   const workspacePath = path.join(first, "data", "workspace.json"),
@@ -123,34 +149,7 @@ try {
     }),
   );
   const moved = path.join(temp, "Moved folder é");
-  try {
-    await fs.rename(first, moved);
-  } catch (e) {
-    if (e.code !== "EPERM") throw e;
-    const atFailure = Date.now() - lastApp.closedAt;
-    const live = lastApp.pids.filter((p) => alive(p.pid));
-    const deaths = {};
-    let released = "not within 30 s";
-    for (let i = 0; i < 300; i++) {
-      await new Promise((r) => setTimeout(r, 100));
-      for (const p of live)
-        if (!(p.pid in deaths) && !alive(p.pid))
-          deaths[p.pid] = Date.now() - lastApp.closedAt;
-      try {
-        await fs.rename(first, moved);
-        released = `${Date.now() - lastApp.closedAt} ms after close`;
-        break;
-      } catch {}
-    }
-    throw Error(
-      [
-        `App folder held after Quit. EPERM ${atFailure} ms after close; released ${released}.`,
-        `App processes before close: ${lastApp.pids.map((p) => `${p.pid} ${p.name}`).join(", ")}`,
-        `Alive at EPERM: ${live.map((p) => `${p.pid} ${p.name} (exited ${deaths[p.pid] ?? "never"} ms)`).join(", ") || "none"}`,
-      ].join("\n"),
-      { cause: e },
-    );
-  }
+  await moveFolder(first, moved);
   const state = await check(moved);
   if (
     !state.workspace.setupComplete ||
